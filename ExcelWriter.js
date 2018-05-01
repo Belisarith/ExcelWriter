@@ -125,11 +125,15 @@ class ExcelWriter {
       let pos = this.uniqueStrings[uniqueString];
       positions[pos] = uniqueString;
     });
+
     for (let i = 0; i < Object.keys(positions).length; i++) {
-      sharedString += `<si><t>${positions[i]}</t></si>`;
+      let valString = positions[i];
+      valString = valString.replace("&", "&amp;"); //& has to be escaped in xml
+      sharedString += `<si><t>${valString}</t></si>`;
     }
 
     sharedString += "</sst>";
+    console.log(sharedString);
     return sharedString;
   }
 

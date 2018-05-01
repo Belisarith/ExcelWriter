@@ -128,7 +128,12 @@ class ExcelWriter {
 
     for (let i = 0; i < Object.keys(positions).length; i++) {
       let valString = positions[i];
-      valString = valString.replace("&", "&amp;"); //& has to be escaped in xml
+      valString = valString
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;"); //escaped characters in xml, using regular expressions to replace all occurences.
       sharedString += `<si><t>${valString}</t></si>`;
     }
 

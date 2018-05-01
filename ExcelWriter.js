@@ -1,3 +1,6 @@
+import FileSaver from "file-saver";
+import JSZip from "jszip";
+
 // [Content_Types].xml
 const contenttypesString =
   '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>';
@@ -44,24 +47,39 @@ class ExcelWriter {
     this.createSheetXML = this.createSheetXML.bind(this);
   }
 
-  addRow(rowArray) {
+  //This function may be used in two ways
+  //1. the passed array contains objects with {Type: "numberOrString", Data: "Data"}
+  //1. The passed array is an array of strings/numbers. When type=string all elements are treaded as strings, when type=auto all types are automatically inferred
+  addRow(rowArray = [], type = "string") {
     this.maxRows++;
     if (this.maxCols < rowArray.length) this.maxCols = rowArray.length;
-    rowArray.forEach(col => {
+    let parsedArray = rowArray.map(col => {
       //Correct if col.Type is erroneously declared as number
-      if (col.Type === "number" && typeof col.Data !== "number")
-        col.Type = "string";
-      if (col.Type === "string") this.numStrings++;
-      if (
-        col.Data !== null &&
-        !(col.Data in this.uniqueStrings) &&
-        col.Type === "string"
-      ) {
-        this.numUniqueStrings++;
-        this.uniqueStrings[col.Data] = this.numUniqueStrings - 1;
+      if (typeof col === "object") {
+        if (col.Type === "number" && typeof col.Data !== "number")
+          col.Type = "string";
+        if (col.Type === "string") this.numStrings++;
+        if (
+          col.Data !== null &&
+          !(col.Data in this.uniqueStrings) &&
+          col.Type === "string"
+        ) {
+          this.numUniqueStrings++;
+          this.uniqueStrings[col.Data] = this.numUniqueStrings - 1;
+        }
+        return col;
+      } else {
+        if (type === "string" || typeof col === "string") {
+          this.numStrings++;
+          if (!(col in this.uniqueStrings)) {
+            this.numUniqueStrings++;
+            this.uniqueStrings[String(col)] = this.numUniqueStrings - 1;
+          }
+          return { Data: col, Type: "string" };
+        } else return { Data: col, Type: "number" };
       }
     });
-    this.rowsData.push(rowArray);
+    this.rowsData.push(parsedArray);
   }
 
   //returns string for /xl/worksheets/sheet1.xml

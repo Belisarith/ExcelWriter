@@ -133,7 +133,6 @@ class ExcelWriter {
     }
 
     sharedString += "</sst>";
-    console.log(sharedString);
     return sharedString;
   }
 

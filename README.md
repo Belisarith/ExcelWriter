@@ -1,2 +1,3 @@
 # ExcelWriter
-A very simple excel docx generator.
+
+A very simple excel xlsx generator.
